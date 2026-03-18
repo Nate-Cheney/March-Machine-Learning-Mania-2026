@@ -1,0 +1,70 @@
+#!/bin/bash
+set -e
+
+# --- Kitty Terminal Info Fix ---
+mkdir -p $HOME/.terminfo/x
+cp .devcontainer/.terminfo/x/xterm-kitty ~/.terminfo/x/
+
+# --- Install Python ---
+# Create virtual environment if it doesn't exist
+if [ ! -d ".venv" ]; then
+    python3 -m venv .venv
+fi
+
+# Activate the virtual environment
+source .venv/bin/activate
+
+# Install packages
+python3 -m pip install --upgrade pip 
+pip3 install -r .devcontainer/requirements.txt
+
+# --- System Dependencies ---
+# build-essential is required by nvim config
+echo "Updating package list and installing build tools..."
+sudo apt-get update
+sudo apt-get install -y build-essential tree-sitter-cli
+
+# --- Tmux Setup ---
+# Enable mouse support 
+if ! grep -q "set -g mouse on" "$HOME/.tmux.conf" 2>/dev/null; then
+  echo "Enabling Tmux mouse mode..."
+  echo "set -g mouse on" >> "$HOME/.tmux.conf"
+fi
+
+# --- Neovim Setup ---
+# 1. Install packer.nvim if it doesn't exist
+PACKER_DIR="$HOME/.local/share/nvim/site/pack/packer/start/packer.nvim"
+if [ ! -d "$PACKER_DIR" ]; then
+  echo "Installing packer.nvim..."
+  git clone --depth 1 https://github.com/wbthomason/packer.nvim "$PACKER_DIR"
+  sleep 2
+fi
+
+# 2. Install neovim dotfiles if they don't exist
+NVIM_TMP_DIR="/tmp/neovim-dotfiles"
+if [ ! -d "$HOME/.config/nvim" ]; then
+  echo "Cloning Neovim configuration..."
+  git clone https://github.com/Nate-Cheney/neovim-dotfiles.git "$NVIM_TMP_DIR"
+  sleep 2
+
+  echo "Syncing Neovim dotfiles..."
+  (cd $NVIM_TMP_DIR && ./sync-dotfiles.sh -d)
+  sleep 2 
+
+  echo "Cleaning Neovim tmp dir..."
+  rm -rf $NVIM_TMP_DIR 
+fi
+
+# 3. Install and compile plugins
+echo "Installing plugins..."
+
+# First pass: Insall plugins via Packer
+nvim --headless --noplugin \
+  -c 'packadd packer.nvim' \
+  -c 'luafile ~/.config/nvim/lua/plugins.lua' \
+  -c 'autocmd User PackerComplete quitall' \
+  -c 'PackerSync' 2>/dev/null || true
+
+sleep 3
+
+echo "Setup complete."

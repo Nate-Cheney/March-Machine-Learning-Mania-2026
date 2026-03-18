@@ -125,6 +125,7 @@ df = merge_team_stats(df, avg_ordinal, "AvgOrdinal", "Ordinal")
 # Initialize the empty dataframe before assigning columns to it
 feature_df = pd.DataFrame()
 
+feature_df["ID"] = sub_df["ID"]
 feature_df["Season"] = df["Season"]
 feature_df["SeedDiff"] = df["TeamA_Seed"] - df["TeamB_Seed"]
 feature_df["AvgPtsDiff"] = df["TeamA_AvgPts"] - df["TeamB_AvgPts"]

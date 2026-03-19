@@ -4,12 +4,10 @@ import numpy as np
 ########################################
 # 1. Load Data                         # 
 ########################################
-seed_df = pd.read_csv("raw_data/MNCAATourneySeeds.csv")
-results_df = pd.read_csv("raw_data/MNCAATourneyDetailedResults.csv")
-reg_season_df = pd.read_csv("raw_data/MRegularSeasonDetailedResults.csv")
-ordinals_df = pd.read_csv("raw_data/MMasseyOrdinals.csv")
+seed_df = pd.read_csv("raw_data/WNCAATourneySeeds.csv")
+results_df = pd.read_csv("raw_data/WNCAATourneyDetailedResults.csv")
+reg_season_df = pd.read_csv("raw_data/WRegularSeasonDetailedResults.csv")
 feature_df = pd.DataFrame()
-
 
 ########################################
 # 2. Clean & preprocess data           # 
@@ -63,13 +61,6 @@ all_ft_made = pd.concat([win_ft_made, loss_ft_made])
 avg_ftm = all_ft_made.groupby(['Season', 'TeamID'])['FTM'].mean().reset_index()
 avg_ftm.rename(columns={'FTM': 'AvgFTM'}, inplace=True)
 
-# Massey Ordinals
-final_ordinals = ordinals_df.groupby(['Season', 'TeamID'])['RankingDayNum'].max().reset_index()
-ordinals_df = ordinals_df.merge(final_ordinals, on=['Season', 'TeamID', 'RankingDayNum'])
-avg_ordinal = ordinals_df.groupby(['Season', 'TeamID'])['OrdinalRank'].mean().reset_index()
-avg_ordinal.rename(columns={'OrdinalRank': 'AvgOrdinal'}, inplace=True)
-
-
 ########################################
 # 3. Extract Base Data (PRO METHOD)    #
 ########################################
@@ -106,8 +97,6 @@ df = merge_team_stats(df, avg_or, "AvgOR", "AvgOR")
 df = merge_team_stats(df, avg_dr, "AvgDR", "AvgDR")
 df = merge_team_stats(df, avg_fta, "AvgFTA", "AvgFTA")
 df = merge_team_stats(df, avg_ftm, "AvgFTM", "AvgFTM")
-df = merge_team_stats(df, avg_ordinal, "AvgOrdinal", "Ordinal")
-
 
 ########################################
 # 4. Calculate Final Modeling Features #
@@ -119,7 +108,6 @@ feature_df["AvgORDiff"] = df["TeamA_AvgOR"] - df["TeamB_AvgOR"]
 feature_df["AvgDRDiff"] = df["TeamA_AvgDR"] - df["TeamB_AvgDR"] 
 feature_df["AvgFTADiff"] = df["TeamA_AvgFTA"] - df["TeamB_AvgFTA"] 
 feature_df["AvgFTMDiff"] = df["TeamA_AvgFTM"] - df["TeamB_AvgFTM"]
-feature_df["OrdinalDiff"] = df["TeamA_Ordinal"] - df["TeamB_Ordinal"]
 
 # Target Variable
 feature_df["TeamA_Won"] = (df["WTeamID"] == df["TeamA"]).astype(int)
@@ -128,5 +116,5 @@ feature_df["TeamA_Won"] = (df["WTeamID"] == df["TeamA"]).astype(int)
 feature_df = feature_df.fillna(0) 
 
 print(feature_df.head())
-feature_df.to_csv("clean_data/features.csv", index=False)
+feature_df.to_csv("clean_data/w_features.csv", index=False)
 

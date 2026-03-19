@@ -34,6 +34,6 @@ submission = pd.DataFrame({
 })
 
 # 6. Save the submission to CSV
-submission.to_csv("submission.csv", index=False)
+submission.to_csv("m_submission.csv", index=False)
 
 print(submission.head())
